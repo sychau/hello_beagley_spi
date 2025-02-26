@@ -72,7 +72,7 @@ MCSPI_ChConfig gConfigMcspi0ChCfg[CONFIG_MCSPI0_NUM_CH] =
         .frameFormat        = MCSPI_FF_POL0_PHA0,
         .bitRate            = 25000000,
         .csPolarity         = MCSPI_CS_POL_LOW,
-        .trMode             = MCSPI_TR_MODE_TX_RX,
+        .trMode             = MCSPI_TR_MODE_TX_ONLY,
         .inputSelect        = MCSPI_IS_D1,
         .dpe0               = MCSPI_DPE_ENABLE,
         .dpe1               = MCSPI_DPE_DISABLE,
@@ -81,8 +81,8 @@ MCSPI_ChConfig gConfigMcspi0ChCfg[CONFIG_MCSPI0_NUM_CH] =
         .startBitPolarity   = MCSPI_SB_POL_LOW,
         .csIdleTime         = MCSPI_TCS0_0_CLK,
         .defaultTxData      = 0x0U,
-        .txFifoTrigLvl      = 16U,
-        .rxFifoTrigLvl      = 16U,
+        .txFifoTrigLvl      = 32U,
+        .rxFifoTrigLvl      = 1U,
     },
 };
 

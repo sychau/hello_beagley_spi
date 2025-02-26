@@ -82,8 +82,6 @@ ClockP_Config gClockConfig = {
 /* ----------- DebugP ----------- */
 void putchar_(char character)
 {
-    /* Output to CCS console */
-    putchar(character);
     /* Output to memory trace buffer */
     DebugP_memLogWriterPutChar(character);
 }
@@ -103,7 +101,7 @@ CacheP_Config gCacheConfig = {
 };
 
 /* ----------- MpuP_armv7 ----------- */
-#define CONFIG_MPU_NUM_REGIONS  (6u)
+#define CONFIG_MPU_NUM_REGIONS  (9u)
 
 MpuP_Config gMpuConfig = {
     .numRegions = CONFIG_MPU_NUM_REGIONS,
@@ -197,6 +195,48 @@ MpuP_RegionConfig gMpuRegionConfig[CONFIG_MPU_NUM_REGIONS] =
             .subregionDisableMask = 0x0u
         },
     },
+    {
+        .baseAddr = 0xA5000000u,
+        .size = MpuP_RegionSize_16M,
+        .attrs = {
+            .isEnable = 1,
+            .isCacheable = 0,
+            .isBufferable = 0,
+            .isSharable = 1,
+            .isExecuteNever = 1,
+            .tex = 1,
+            .accessPerm = MpuP_AP_ALL_RW,
+            .subregionDisableMask = 0x0u
+        },
+    },
+    {
+        .baseAddr = 0xA1000000u,
+        .size = MpuP_RegionSize_1M,
+        .attrs = {
+            .isEnable = 1,
+            .isCacheable = 0,
+            .isBufferable = 0,
+            .isSharable = 1,
+            .isExecuteNever = 1,
+            .tex = 1,
+            .accessPerm = MpuP_AP_ALL_RW,
+            .subregionDisableMask = 0x0u
+        },
+    },
+    {
+        .baseAddr = 0xA1100000u,
+        .size = MpuP_RegionSize_1M,
+        .attrs = {
+            .isEnable = 1,
+            .isCacheable = 0,
+            .isBufferable = 0,
+            .isSharable = 1,
+            .isExecuteNever = 1,
+            .tex = 1,
+            .accessPerm = MpuP_AP_ALL_RW,
+            .subregionDisableMask = 0x0u
+        },
+    },
 };
 
 
@@ -220,8 +260,6 @@ void Dpl_init(void)
 
     /* init debug log zones early */
     /* Debug log init */
-    DebugP_logZoneEnable(DebugP_LOG_ZONE_ERROR);
-    DebugP_logZoneEnable(DebugP_LOG_ZONE_WARN);
     /* Initialize linux trace log writer */
     DebugP_memLogWriterInit(CSL_CORE_ID_MCU_R5FSS0_0);
 

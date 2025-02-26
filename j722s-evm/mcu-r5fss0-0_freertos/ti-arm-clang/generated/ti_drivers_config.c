@@ -221,25 +221,25 @@ void System_lateInit(void)
         RPMessage_Params_init(&rpmsgParams);
 
         /* VRING mapping from source core to destination core, '-1' means NO VRING,
-            mcu_r5fss0_0 => {"mcu_r5fss0_0":-1,"wkup_r5fss0_0":0,"main_r5fss0_0":2,"c75ss0_0":4,"c75ss1_0":6,"a53ss0_0":8}
-            wkup_r5fss0_0 => {"mcu_r5fss0_0":1,"wkup_r5fss0_0":-1,"main_r5fss0_0":10,"c75ss0_0":12,"c75ss1_0":14,"a53ss0_0":16}
-            main_r5fss0_0 => {"mcu_r5fss0_0":3,"wkup_r5fss0_0":11,"main_r5fss0_0":-1,"c75ss0_0":18,"c75ss1_0":20,"a53ss0_0":22}
-            c75ss0_0 => {"mcu_r5fss0_0":5,"wkup_r5fss0_0":13,"main_r5fss0_0":19,"c75ss0_0":-1,"c75ss1_0":24,"a53ss0_0":26}
-            c75ss1_0 => {"mcu_r5fss0_0":7,"wkup_r5fss0_0":15,"main_r5fss0_0":21,"c75ss0_0":25,"c75ss1_0":-1,"a53ss0_0":28}
-            a53ss0_0 => {"mcu_r5fss0_0":9,"wkup_r5fss0_0":17,"main_r5fss0_0":23,"c75ss0_0":27,"c75ss1_0":29,"a53ss0_0":-1}
+            mcu_r5fss0_0 => {"mcu_r5fss0_0":-1,"wkup_r5fss0_0":0,"main_r5fss0_0":1,"c75ss0_0":2,"c75ss1_0":3,"a53ss0_0":4}
+            wkup_r5fss0_0 => {"mcu_r5fss0_0":5,"wkup_r5fss0_0":-1,"main_r5fss0_0":6,"c75ss0_0":7,"c75ss1_0":8,"a53ss0_0":9}
+            main_r5fss0_0 => {"mcu_r5fss0_0":10,"wkup_r5fss0_0":11,"main_r5fss0_0":-1,"c75ss0_0":12,"c75ss1_0":13,"a53ss0_0":14}
+            c75ss0_0 => {"mcu_r5fss0_0":15,"wkup_r5fss0_0":16,"main_r5fss0_0":17,"c75ss0_0":-1,"c75ss1_0":18,"a53ss0_0":19}
+            c75ss1_0 => {"mcu_r5fss0_0":20,"wkup_r5fss0_0":21,"main_r5fss0_0":22,"c75ss0_0":23,"c75ss1_0":-1,"a53ss0_0":24}
+            a53ss0_0 => {"mcu_r5fss0_0":25,"wkup_r5fss0_0":26,"main_r5fss0_0":27,"c75ss0_0":28,"c75ss1_0":29,"a53ss0_0":-1}
          */
         /* TX VRINGs */
         rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_WKUP_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[0];
-        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_MAIN_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[2];
-        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_C75SS0_0] = (uintptr_t)gRPMessageVringMem[4];
-        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_C75SS1_0] = (uintptr_t)gRPMessageVringMem[6];
-        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_A53SS0_0] = (uintptr_t)gRPMessageVringMem[8];
+        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_MAIN_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[1];
+        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_C75SS0_0] = (uintptr_t)gRPMessageVringMem[2];
+        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_C75SS1_0] = (uintptr_t)gRPMessageVringMem[3];
+        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_A53SS0_0] = (uintptr_t)gRPMessageVringMem[4];
         /* RX VRINGs */
-        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_WKUP_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[1];
-        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_MAIN_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[3];
-        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_C75SS0_0] = (uintptr_t)gRPMessageVringMem[5];
-        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_C75SS1_0] = (uintptr_t)gRPMessageVringMem[7];
-        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_A53SS0_0] = (uintptr_t)gRPMessageVringMem[9];
+        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_WKUP_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[5];
+        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_MAIN_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[10];
+        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_C75SS0_0] = (uintptr_t)gRPMessageVringMem[15];
+        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_C75SS1_0] = (uintptr_t)gRPMessageVringMem[20];
+        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_A53SS0_0] = (uintptr_t)gRPMessageVringMem[25];
         /* Other VRING properties */
         rpmsgParams.vringSize = IPC_RPMESSAGE_VRING_SIZE;
         rpmsgParams.vringNumBuf = IPC_RPMESSAGE_NUM_VRING_BUF;
@@ -247,9 +247,6 @@ void System_lateInit(void)
         rpmsgParams.linuxResourceTable = &gRPMessage_linuxResourceTable;
         rpmsgParams.linuxCoreId = CSL_CORE_ID_A53SS0_0;
 
-        { /* Enable the vring allocation to match PDK */
-            rpmsgParams.vringAllocationPDK = 1u;
-        }
 
         /* initialize the IPC RP Message module */
         status = RPMessage_init(&rpmsgParams);
@@ -319,25 +316,25 @@ void System_init(void)
         RPMessage_Params_init(&rpmsgParams);
 
         /* VRING mapping from source core to destination core, '-1' means NO VRING,
-            mcu_r5fss0_0 => {"mcu_r5fss0_0":-1,"wkup_r5fss0_0":0,"main_r5fss0_0":2,"c75ss0_0":4,"c75ss1_0":6,"a53ss0_0":8}
-            wkup_r5fss0_0 => {"mcu_r5fss0_0":1,"wkup_r5fss0_0":-1,"main_r5fss0_0":10,"c75ss0_0":12,"c75ss1_0":14,"a53ss0_0":16}
-            main_r5fss0_0 => {"mcu_r5fss0_0":3,"wkup_r5fss0_0":11,"main_r5fss0_0":-1,"c75ss0_0":18,"c75ss1_0":20,"a53ss0_0":22}
-            c75ss0_0 => {"mcu_r5fss0_0":5,"wkup_r5fss0_0":13,"main_r5fss0_0":19,"c75ss0_0":-1,"c75ss1_0":24,"a53ss0_0":26}
-            c75ss1_0 => {"mcu_r5fss0_0":7,"wkup_r5fss0_0":15,"main_r5fss0_0":21,"c75ss0_0":25,"c75ss1_0":-1,"a53ss0_0":28}
-            a53ss0_0 => {"mcu_r5fss0_0":9,"wkup_r5fss0_0":17,"main_r5fss0_0":23,"c75ss0_0":27,"c75ss1_0":29,"a53ss0_0":-1}
+            mcu_r5fss0_0 => {"mcu_r5fss0_0":-1,"wkup_r5fss0_0":0,"main_r5fss0_0":1,"c75ss0_0":2,"c75ss1_0":3,"a53ss0_0":4}
+            wkup_r5fss0_0 => {"mcu_r5fss0_0":5,"wkup_r5fss0_0":-1,"main_r5fss0_0":6,"c75ss0_0":7,"c75ss1_0":8,"a53ss0_0":9}
+            main_r5fss0_0 => {"mcu_r5fss0_0":10,"wkup_r5fss0_0":11,"main_r5fss0_0":-1,"c75ss0_0":12,"c75ss1_0":13,"a53ss0_0":14}
+            c75ss0_0 => {"mcu_r5fss0_0":15,"wkup_r5fss0_0":16,"main_r5fss0_0":17,"c75ss0_0":-1,"c75ss1_0":18,"a53ss0_0":19}
+            c75ss1_0 => {"mcu_r5fss0_0":20,"wkup_r5fss0_0":21,"main_r5fss0_0":22,"c75ss0_0":23,"c75ss1_0":-1,"a53ss0_0":24}
+            a53ss0_0 => {"mcu_r5fss0_0":25,"wkup_r5fss0_0":26,"main_r5fss0_0":27,"c75ss0_0":28,"c75ss1_0":29,"a53ss0_0":-1}
          */
         /* TX VRINGs */
         rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_WKUP_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[0];
-        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_MAIN_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[2];
-        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_C75SS0_0] = (uintptr_t)gRPMessageVringMem[4];
-        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_C75SS1_0] = (uintptr_t)gRPMessageVringMem[6];
-        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_A53SS0_0] = (uintptr_t)gRPMessageVringMem[8];
+        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_MAIN_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[1];
+        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_C75SS0_0] = (uintptr_t)gRPMessageVringMem[2];
+        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_C75SS1_0] = (uintptr_t)gRPMessageVringMem[3];
+        rpmsgParams.vringTxBaseAddr[CSL_CORE_ID_A53SS0_0] = (uintptr_t)gRPMessageVringMem[4];
         /* RX VRINGs */
-        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_WKUP_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[1];
-        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_MAIN_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[3];
-        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_C75SS0_0] = (uintptr_t)gRPMessageVringMem[5];
-        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_C75SS1_0] = (uintptr_t)gRPMessageVringMem[7];
-        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_A53SS0_0] = (uintptr_t)gRPMessageVringMem[9];
+        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_WKUP_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[5];
+        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_MAIN_R5FSS0_0] = (uintptr_t)gRPMessageVringMem[10];
+        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_C75SS0_0] = (uintptr_t)gRPMessageVringMem[15];
+        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_C75SS1_0] = (uintptr_t)gRPMessageVringMem[20];
+        rpmsgParams.vringRxBaseAddr[CSL_CORE_ID_A53SS0_0] = (uintptr_t)gRPMessageVringMem[25];
         /* Other VRING properties */
         rpmsgParams.vringSize = IPC_RPMESSAGE_VRING_SIZE;
         rpmsgParams.vringNumBuf = IPC_RPMESSAGE_NUM_VRING_BUF;
@@ -345,9 +342,6 @@ void System_init(void)
         rpmsgParams.linuxResourceTable = &gRPMessage_linuxResourceTable;
         rpmsgParams.linuxCoreId = CSL_CORE_ID_A53SS0_0;
 
-        { /* Enable the vring allocation to match PDK */
-            rpmsgParams.vringAllocationPDK = 1u;
-        }
 
         /* initialize the IPC RP Message module */
         status = RPMessage_init(&rpmsgParams);

@@ -5,6 +5,9 @@
         "ti_board_open_close.h": "c",
         "ti_drivers_open_close.h": "c",
         "ipc_rpmsg_priv.h": "c",
-        "inttypes.h": "c"
+        "inttypes.h": "c",
+        "freertos.h": "c",
+        "portable.h": "c",
+        "portmacro.h": "c"
     }
 }

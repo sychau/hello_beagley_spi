@@ -4,7 +4,11 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "../../source"
+                "../../source",
+                "../../source/kernel/**",
+                "../../source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F",
+                "../../source/kernel/freertos/config/j722s/r5f/**",
+                "~/ti/ti-cgt-c7000_4.1.0.LTS/include/**"
             ],
             "defines": ["SOC_J722S"],
             "compilerPath": "/usr/bin/gcc",
