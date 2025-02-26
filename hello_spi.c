@@ -90,8 +90,8 @@ TaskP_Object gIpcTask[IPC_RPMESSAGE_NUM_RECV_TASKS];
 
 volatile uint8_t gbShutdown = 0u;
 volatile uint8_t gbShutdownRemotecoreID = 0u;
-volatile uint8_t gIpcAckReplyMsgObjectPending = 0u;
-volatile uint8_t gRecvTaskExitCounter = 0;
+
+volatile uint8_t gHasUncheckedMail = 0u;
 
 void ipc_recv_task_main(void *args)
 {
@@ -111,7 +111,7 @@ void ipc_recv_task_main(void *args)
         * after return `recvMsgSize` contains actual size of valid data in recv buffer
         */
         // Debug messages are not printed beyond this point
-        recvMsgSize = IPC_RPMESSAGE_MAX_MSG_SIZE;
+        recvMsgSize = IPC_RPMESSAGE_MAX_MSG_SIZE; // could be shutdown message or data message
         status = RPMessage_recv(pRpmsgObj,
             recvMsg, &recvMsgSize,
             &remoteCoreId, &remoteCoreEndPt,
@@ -120,10 +120,9 @@ void ipc_recv_task_main(void *args)
         if (gbShutdown == 1u) {
             break;
         }
-
         DebugP_assert(status==SystemP_SUCCESS);
 
-        /* send ack to sender CPU at the sender end point */
+        // Reply to data message
         status = RPMessage_send(
             recvMsg, recvMsgSize,
             remoteCoreId, remoteCoreEndPt,
@@ -135,17 +134,16 @@ void ipc_recv_task_main(void *args)
     /* Fllow the sequence for graceful shutdown for the last recv task */
     DebugP_log("[IPC RPMSG ECHO] Closing all drivers and going to WFI ... !!!\r\n");
 
-    /* Close the drivers */
-    Drivers_close();
-
-    /* deinit system */
-    System_deinit();
-
     if (gbShutdownRemotecoreID) {
         /* ACK the shutdown message */
         IpcNotify_sendMsg(gbShutdownRemotecoreID,
             IPC_NOTIFY_CLIENT_ID_RP_MBOX, IPC_NOTIFY_RP_MBOX_SHUTDOWN_ACK, 1u);
     }
+
+    Drivers_close();
+    System_deinit();
+
+    // RF5 enter wait for Wait For Interrupt mode
     __asm__ __volatile__ ("wfi"   "\n\t": : : "memory");
     
     vTaskDelete(NULL);
@@ -206,13 +204,6 @@ void ipc_rpmsg_create_recv_tasks()
 
 static void trigger_shutdown()
 {
-    gbShutdown = 1u;
-    RPMessage_unblock(&gIpcRecvMsgObject[0]);
-    RPMessage_unblock(&gIpcRecvMsgObject[1]);
-
-    if (gIpcAckReplyMsgObjectPending == 1u) {
-        RPMessage_unblock(&gIpcAckReplyMsgObject);
-    }
 }
 
 void ipc_rp_mbox_callback(uint16_t remoteCoreId, uint16_t clientId, uint32_t msgValue, void *args)
@@ -222,7 +213,12 @@ void ipc_rp_mbox_callback(uint16_t remoteCoreId, uint16_t clientId, uint32_t msg
         /* Shutdown request from the remoteproc */
         if (msgValue == IPC_NOTIFY_RP_MBOX_SHUTDOWN) {
             gbShutdownRemotecoreID = remoteCoreId;
-            trigger_shutdown();
+            gbShutdown = 1u;
+            RPMessage_unblock(&gIpcRecvMsgObject[0]);
+        
+        /* Notifying a new RPMessage in the mailbox*/
+        } else {
+            RPMessage_unblock(&gIpcRecvMsgObject[1]);     
         }
     }
 }
