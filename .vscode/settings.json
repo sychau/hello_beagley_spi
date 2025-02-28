@@ -8,6 +8,7 @@
         "inttypes.h": "c",
         "freertos.h": "c",
         "portable.h": "c",
-        "portmacro.h": "c"
+        "portmacro.h": "c",
+        "time.h": "c"
     }
 }

@@ -48,8 +48,7 @@
 #include "task.h"
 
 // MCSPI
-#define APP_MCSPI_MSGSIZE                   (32U)
-#define APP_MCSPI_TRANSFER_LOOPCOUNT        (10U)
+#define APP_MCSPI_MSGSIZE                   (256U)
 
 uint8_t gMcspiTxBuffer[APP_MCSPI_MSGSIZE];
 uint8_t gMcspiRxBuffer[APP_MCSPI_MSGSIZE];
@@ -107,7 +106,7 @@ void ipc_recv_task_main(void *args)
 
     /* wait for messages forever in a loop */
     while(1) {
-        /* set 'recvMsgSize' to size of recv buffer,
+        /* set 'recvMsgSize' to size of recv buf fer,
         * after return `recvMsgSize` contains actual size of valid data in recv buffer
         */
         // Debug messages are not printed beyond this point
@@ -121,10 +120,24 @@ void ipc_recv_task_main(void *args)
             break;
         }
         DebugP_assert(status==SystemP_SUCCESS);
+        /* Initiate SPI data transaction */
+        MCSPI_Transaction spiTransaction;
 
-        // Reply to data message
+        MCSPI_Transaction_init(&spiTransaction);
+        spiTransaction.channel   = gConfigMcspi0ChCfg[0].chNum;
+        spiTransaction.dataSize  = 8;
+        spiTransaction.csDisable = TRUE;
+        spiTransaction.count     = recvMsgSize / (spiTransaction.dataSize/8);
+        spiTransaction.txBuf     = (void *)recvMsg;
+        spiTransaction.rxBuf     = NULL;
+        spiTransaction.args      = NULL;
+
+        int32_t transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
+        DebugP_assert(transferOK==SystemP_SUCCESS);
+        
+        // Reply to data message to indicate SPI data sent
         status = RPMessage_send(
-            recvMsg, recvMsgSize,
+            "okay", 8, // enough to hold the string
             remoteCoreId, remoteCoreEndPt,
             RPMessage_getLocalEndPt(pRpmsgObj),
             SystemP_WAIT_FOREVER);
@@ -202,13 +215,9 @@ void ipc_rpmsg_create_recv_tasks()
     DebugP_assert(status == SystemP_SUCCESS);
 }
 
-static void trigger_shutdown()
-{
-}
-
 void ipc_rp_mbox_callback(uint16_t remoteCoreId, uint16_t clientId, uint32_t msgValue, void *args)
 {
-    DebugP_log("Mailbox callback ...\r\n");
+    DebugP_log("Mailbox callback, why not shown??\n");
     if (clientId == IPC_NOTIFY_CLIENT_ID_RP_MBOX) {
         /* Shutdown request from the remoteproc */
         if (msgValue == IPC_NOTIFY_RP_MBOX_SHUTDOWN) {
@@ -225,48 +234,14 @@ void ipc_rp_mbox_callback(uint16_t remoteCoreId, uint16_t clientId, uint32_t msg
 
 void hello_spi_main(void *args)
 {
-    int32_t             status = SystemP_SUCCESS;
-    uint32_t            i;
-    int32_t             transferOK;
-    MCSPI_Transaction   spiTransaction;
+    DebugP_log("Enter hello_spi_main\n");
 
-    DebugP_log("[MCSPI] Loopback example started ...\r\n");
-
-    /* Memfill buffers */
-    for(i = 0U; i < APP_MCSPI_MSGSIZE; i++) {
+    /* Memfill SPI buffers */
+    for(int i = 0; i < APP_MCSPI_MSGSIZE; i++) {
         gMcspiTxBuffer[i] = i;
-        gMcspiRxBuffer[i] = 0U;
     }
 
-    /* Initiate transfer */
-    MCSPI_Transaction_init(&spiTransaction);
-    spiTransaction.channel  = gConfigMcspi0ChCfg[0].chNum;
-    spiTransaction.dataSize = 8;
-    spiTransaction.csDisable = TRUE;
-    spiTransaction.count    = APP_MCSPI_MSGSIZE / (spiTransaction.dataSize/8);
-    spiTransaction.txBuf    = (void *)gMcspiTxBuffer;
-    spiTransaction.rxBuf    = (void *)gMcspiRxBuffer;
-    spiTransaction.args     = NULL;
-
-    transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
-
-    if((SystemP_SUCCESS != transferOK) ||
-       (MCSPI_TRANSFER_COMPLETED != spiTransaction.status)) {
-        DebugP_assert(FALSE); /* MCSPI transfer failed!! */
-    } else {
-        /* Compare data */
-        for(i = 0U; i < APP_MCSPI_MSGSIZE; i++) {
-            if(gMcspiTxBuffer[i] != gMcspiRxBuffer[i]) {
-                status = SystemP_FAILURE;   /* Data mismatch */
-                DebugP_log("Data Mismatch at offset %d\r\n", i);
-                break;
-            }
-        }
-    }
-    if (status == SystemP_SUCCESS) {
-        DebugP_log("SPI test passed\r\n");
-    }
-    status = RPMessage_waitForLinuxReady(SystemP_WAIT_FOREVER);
+    int32_t status = RPMessage_waitForLinuxReady(SystemP_WAIT_FOREVER);
     DebugP_assert(status==SystemP_SUCCESS);
 
     /* Register a callback for the RP_MBOX messages from the Linux remoteproc driver*/
