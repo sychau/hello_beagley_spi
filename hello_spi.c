@@ -92,6 +92,19 @@ volatile uint8_t gbShutdownRemotecoreID = 0u;
 
 volatile uint8_t gHasUncheckedMail = 0u;
 
+enum MessageType {
+    DATA,
+    NOTIFY
+};
+
+typedef struct {
+    enum MessageType type;
+    uint32_t bytes;
+    uint8_t* addr;
+} NotificationHeader;
+
+volatile uint8_t gUserSharedMem[240*240*2] __attribute__((aligned(4096), section(".bss.user_shared_mem")));
+
 void ipc_recv_task_main(void *args)
 {
     int32_t status;
@@ -119,22 +132,73 @@ void ipc_recv_task_main(void *args)
         if (gbShutdown == 1u) {
             break;
         }
-        DebugP_assert(status==SystemP_SUCCESS);
-        /* Initiate SPI data transaction */
-        MCSPI_Transaction spiTransaction;
 
+        NotificationHeader* notiHeader = (NotificationHeader*) recvMsg;
+        bool isFrame = notiHeader->type == NOTIFY && notiHeader->addr == (uint8_t*)0xA1100000;
+
+        MCSPI_Transaction spiTransaction;
         MCSPI_Transaction_init(&spiTransaction);
         spiTransaction.channel   = gConfigMcspi0ChCfg[0].chNum;
         spiTransaction.dataSize  = 8;
         spiTransaction.csDisable = TRUE;
-        spiTransaction.count     = recvMsgSize / (spiTransaction.dataSize/8);
-        spiTransaction.txBuf     = (void *)recvMsg;
         spiTransaction.rxBuf     = NULL;
         spiTransaction.args      = NULL;
-
+        if (isFrame) {
+            spiTransaction.count     = 240*240 / (spiTransaction.dataSize/8);
+            spiTransaction.txBuf     = (void *)gUserSharedMem;
+            int32_t transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
+            DebugP_assert(transferOK==SystemP_SUCCESS);
+            // Prepare to send second half, can't send over 2^16 in one go
+            spiTransaction.txBuf     = (void *)gUserSharedMem + 240*240;
+        } else {
+            spiTransaction.count     = recvMsgSize / (spiTransaction.dataSize/8);
+            spiTransaction.txBuf     = (void *)recvMsg;
+        }
         int32_t transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
         DebugP_assert(transferOK==SystemP_SUCCESS);
+
+        // Determine the mailbox request a command or frame to be sent
+        // NotificationHeader* notiHeader = (NotificationHeader*) recvMsg;
+        // bool isFrame = notiHeader->type == NOTIFY;
         
+        // volatile uint8_t* txBuf;
+        // volatile uint32_t txBufSize;
+
+        // if (isFrame) {
+        //     txBuf = gUserSharedMem;
+        //     txBufSize = notiHeader->bytes / 2; // Only half
+        //     DebugP_log("frameBuffer: %p size: %u\n", txBuf, txBufSize);
+        //     DebugP_log("first 8 bytes:  0x%016x\n", *((uint64_t*)notiHeader->addr));
+        // } else {
+        //     DataHeader* dataHeader = (DataHeader*) recvMsg;
+        //     txBuf = (uint8_t*) &dataHeader->data;
+        //     txBufSize = dataHeader->bytes;
+        // }
+
+        // /* Initiate SPI data transaction */
+        // MCSPI_Transaction spiTransaction;
+
+        // MCSPI_Transaction_init(&spiTransaction);
+        // spiTransaction.channel   = gConfigMcspi0ChCfg[0].chNum;
+        // spiTransaction.dataSize  = 8;
+        // spiTransaction.csDisable = TRUE;
+        // spiTransaction.count     = txBufSize / (spiTransaction.dataSize/8);
+        // spiTransaction.txBuf     = (void *)txBuf;
+        // spiTransaction.rxBuf     = NULL;
+        // spiTransaction.args      = NULL;
+
+        // int32_t transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
+
+        // DebugP_assert(transferOK==SystemP_SUCCESS);
+
+        // // The MCSPI cannot send more than 2^16 bytes in one go, need to send the second half
+        // if (isFrame) {
+        //     spiTransaction.txBuf = (void *)(txBuf + txBufSize);
+        //     spiTransaction.status = MCSPI_TRANSFER_COMPLETED;
+        //     transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
+        //     DebugP_assert(transferOK==SystemP_SUCCESS);
+        // }
+
         // Reply to data message to indicate SPI data sent
         status = RPMessage_send(
             "okay", 8, // enough to hold the string

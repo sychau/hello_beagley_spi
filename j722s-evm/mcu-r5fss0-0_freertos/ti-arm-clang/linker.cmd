@@ -94,6 +94,9 @@ SECTIONS
         .init_array: {} palign(8)   /* Contains function pointers called before main */
         .fini_array: {} palign(8)   /* Contains function pointers called after main */
     } > DDR_CODE_DATA
+
+    .bss.user_shared_mem (NOLOAD) :{} > FRAME_BUFFER
+
 }
 
 MEMORY
@@ -102,5 +105,6 @@ MEMORY
     R5F_TCMA  : ORIGIN = 0x00000040 , LENGTH = 0x00007FC0
     R5F_TCMB0 : ORIGIN = 0x41010000 , LENGTH = 0x00004000
 
+    FRAME_BUFFER : ORIGIN = 0xA1100000 , LENGTH = 0x00100000
     DDR_CODE_DATA                 : ORIGIN = 0xA1200000, LENGTH = 0xE00000   /* Code/Data            */
 }

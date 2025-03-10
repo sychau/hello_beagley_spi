@@ -101,7 +101,7 @@ CacheP_Config gCacheConfig = {
 };
 
 /* ----------- MpuP_armv7 ----------- */
-#define CONFIG_MPU_NUM_REGIONS  (9u)
+#define CONFIG_MPU_NUM_REGIONS  (10u)
 
 MpuP_Config gMpuConfig = {
     .numRegions = CONFIG_MPU_NUM_REGIONS,
@@ -231,7 +231,7 @@ MpuP_RegionConfig gMpuRegionConfig[CONFIG_MPU_NUM_REGIONS] =
             .isCacheable = 0,
             .isBufferable = 0,
             .isSharable = 1,
-            .isExecuteNever = 1,
+            .isExecuteNever = 0,
             .tex = 1,
             .accessPerm = MpuP_AP_ALL_RW,
             .subregionDisableMask = 0x0u
