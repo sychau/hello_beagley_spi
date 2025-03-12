@@ -74,9 +74,9 @@ HwiP_Config gHwiConfig = {
 ClockP_Config gClockConfig = {
     .timerBaseAddr = MCU_TIMER0_BASE_ADDR,
     .timerHwiIntNum = 28,
-    .timerInputClkHz = 25000000,
+    .timerInputClkHz = 50000000,
     .timerInputPreScaler = 1,
-    .usecPerTick = 1000,
+    .usecPerTick = 100,
 };
 
 /* ----------- DebugP ----------- */
@@ -211,6 +211,20 @@ MpuP_RegionConfig gMpuRegionConfig[CONFIG_MPU_NUM_REGIONS] =
     },
     {
         .baseAddr = 0xA1000000u,
+        .size = MpuP_RegionSize_1M,
+        .attrs = {
+            .isEnable = 1,
+            .isCacheable = 0,
+            .isBufferable = 0,
+            .isSharable = 1,
+            .isExecuteNever = 1,
+            .tex = 1,
+            .accessPerm = MpuP_AP_ALL_RW,
+            .subregionDisableMask = 0x0u
+        },
+    },
+    {
+        .baseAddr = 0xA1100000u,
         .size = MpuP_RegionSize_1M,
         .attrs = {
             .isEnable = 1,

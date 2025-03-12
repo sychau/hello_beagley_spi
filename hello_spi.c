@@ -92,23 +92,27 @@ volatile uint8_t gbShutdownRemotecoreID = 0u;
 
 volatile uint8_t gHasUncheckedMail = 0u;
 
+#define LCD_WIDTH 240
+#define LCD_HEIGHT 240
+#define LCD_COLOR_BYTES 2 // 16 bits per pixel
+
 enum MessageType {
-    DATA,
-    NOTIFY
+    NOTIFY_FULLFRAME = 737,
+    NOTIFY_INTERLACE = 787
 };
 
 typedef struct {
-    enum MessageType type;
+    uint32_t type;
     uint32_t bytes;
-    uint8_t* addr;
+    uint32_t offset;
 } NotificationHeader;
 
-volatile uint8_t gUserSharedMem[240*240*2] __attribute__((aligned(4096), section(".bss.user_shared_mem")));
+volatile uint8_t gUserSharedMem[LCD_WIDTH*LCD_HEIGHT*2] __attribute__((aligned(4096), section(".bss.user_shared_mem")));
 
 void ipc_recv_task_main(void *args)
 {
     int32_t status;
-    char recvMsg[IPC_RPMESSAGE_MAX_MSG_SIZE+1]; /* +1 for NULL char in worst case */
+    __attribute__((aligned(4))) char recvMsg[IPC_RPMESSAGE_MAX_MSG_SIZE+1]; /* +1 for NULL char in worst case */
     uint16_t recvMsgSize, remoteCoreId;
     uint32_t remoteCoreEndPt;
     RPMessage_Object *pRpmsgObj = (RPMessage_Object *)args;
@@ -133,9 +137,6 @@ void ipc_recv_task_main(void *args)
             break;
         }
 
-        NotificationHeader* notiHeader = (NotificationHeader*) recvMsg;
-        bool isFrame = notiHeader->type == NOTIFY && notiHeader->addr == (uint8_t*)0xA1100000;
-
         MCSPI_Transaction spiTransaction;
         MCSPI_Transaction_init(&spiTransaction);
         spiTransaction.channel   = gConfigMcspi0ChCfg[0].chNum;
@@ -143,61 +144,36 @@ void ipc_recv_task_main(void *args)
         spiTransaction.csDisable = TRUE;
         spiTransaction.rxBuf     = NULL;
         spiTransaction.args      = NULL;
-        if (isFrame) {
-            spiTransaction.count     = 240*240 / (spiTransaction.dataSize/8);
-            spiTransaction.txBuf     = (void *)gUserSharedMem;
-            int32_t transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
+
+        NotificationHeader* notiHeader = (NotificationHeader*) recvMsg;
+        int32_t transferOK;
+        // Transfer full frame
+        if (notiHeader->type == NOTIFY_FULLFRAME) {
+            spiTransaction.count = LCD_WIDTH*LCD_HEIGHT / (spiTransaction.dataSize/8);
+            spiTransaction.txBuf = (void *)gUserSharedMem;
+            transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
             DebugP_assert(transferOK==SystemP_SUCCESS);
-            // Prepare to send second half, can't send over 2^16 in one go
-            spiTransaction.txBuf     = (void *)gUserSharedMem + 240*240;
+
+            // Send second half, can't send over 2^16 in one go
+            spiTransaction.txBuf = (void *)gUserSharedMem + LCD_WIDTH*LCD_HEIGHT;
+            transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
+            DebugP_assert(transferOK==SystemP_SUCCESS);
+
+        // Transfer odd/ even line alternately
+        } else if (notiHeader->type == NOTIFY_INTERLACE) { 
+            // DebugP_log("sending: %u to %p\n", notiHeader->bytes, (void *)gUserSharedMem + notiHeader->offset);
+            spiTransaction.count = notiHeader->bytes / (spiTransaction.dataSize/8);
+            spiTransaction.txBuf = (void *)gUserSharedMem + notiHeader->offset;
+            transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
+            DebugP_assert(transferOK==SystemP_SUCCESS);
+
+        // Transfer non-frame data
         } else {
             spiTransaction.count     = recvMsgSize / (spiTransaction.dataSize/8);
             spiTransaction.txBuf     = (void *)recvMsg;
+            transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
+            DebugP_assert(transferOK==SystemP_SUCCESS);
         }
-        int32_t transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
-        DebugP_assert(transferOK==SystemP_SUCCESS);
-
-        // Determine the mailbox request a command or frame to be sent
-        // NotificationHeader* notiHeader = (NotificationHeader*) recvMsg;
-        // bool isFrame = notiHeader->type == NOTIFY;
-        
-        // volatile uint8_t* txBuf;
-        // volatile uint32_t txBufSize;
-
-        // if (isFrame) {
-        //     txBuf = gUserSharedMem;
-        //     txBufSize = notiHeader->bytes / 2; // Only half
-        //     DebugP_log("frameBuffer: %p size: %u\n", txBuf, txBufSize);
-        //     DebugP_log("first 8 bytes:  0x%016x\n", *((uint64_t*)notiHeader->addr));
-        // } else {
-        //     DataHeader* dataHeader = (DataHeader*) recvMsg;
-        //     txBuf = (uint8_t*) &dataHeader->data;
-        //     txBufSize = dataHeader->bytes;
-        // }
-
-        // /* Initiate SPI data transaction */
-        // MCSPI_Transaction spiTransaction;
-
-        // MCSPI_Transaction_init(&spiTransaction);
-        // spiTransaction.channel   = gConfigMcspi0ChCfg[0].chNum;
-        // spiTransaction.dataSize  = 8;
-        // spiTransaction.csDisable = TRUE;
-        // spiTransaction.count     = txBufSize / (spiTransaction.dataSize/8);
-        // spiTransaction.txBuf     = (void *)txBuf;
-        // spiTransaction.rxBuf     = NULL;
-        // spiTransaction.args      = NULL;
-
-        // int32_t transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
-
-        // DebugP_assert(transferOK==SystemP_SUCCESS);
-
-        // // The MCSPI cannot send more than 2^16 bytes in one go, need to send the second half
-        // if (isFrame) {
-        //     spiTransaction.txBuf = (void *)(txBuf + txBufSize);
-        //     spiTransaction.status = MCSPI_TRANSFER_COMPLETED;
-        //     transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
-        //     DebugP_assert(transferOK==SystemP_SUCCESS);
-        // }
 
         // Reply to data message to indicate SPI data sent
         status = RPMessage_send(

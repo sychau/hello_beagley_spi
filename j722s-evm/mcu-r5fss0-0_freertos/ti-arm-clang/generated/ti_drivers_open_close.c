@@ -70,7 +70,7 @@ MCSPI_ChConfig gConfigMcspi0ChCfg[CONFIG_MCSPI0_NUM_CH] =
     {
         .chNum              = MCSPI_CHANNEL_0,
         .frameFormat        = MCSPI_FF_POL0_PHA0,
-        .bitRate            = 25000000,
+        .bitRate            = 50000000,
         .csPolarity         = MCSPI_CS_POL_LOW,
         .trMode             = MCSPI_TR_MODE_TX_ONLY,
         .inputSelect        = MCSPI_IS_D1,

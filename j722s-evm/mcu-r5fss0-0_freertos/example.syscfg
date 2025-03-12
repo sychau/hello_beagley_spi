@@ -12,6 +12,7 @@
 const ipc         = scripting.addModule("/drivers/ipc/ipc");
 const mcspi       = scripting.addModule("/drivers/mcspi/mcspi", {}, false);
 const mcspi1      = mcspi.addInstance();
+const clock       = scripting.addModule("/kernel/dpl/clock");
 const debug_log   = scripting.addModule("/kernel/dpl/debug_log");
 const mpu_armv7   = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
 const mpu_armv71  = mpu_armv7.addInstance();
@@ -33,15 +34,19 @@ ipc.a53ss0_0           = "notify_rpmsg";
 
 mcspi1.$name                           = "CONFIG_MCSPI0";
 mcspi1.trMode                          = "TX_ONLY";
+mcspi1.intrEnable                      = "POLLED";
 mcspi1.MCU_SPI.CLK.rx                  = false;
 mcspi1.MCU_SPI.CLK.$assign             = "MCU_SPI0_CLK";
 mcspi1.MCU_SPI.D0.rx                   = false;
 mcspi1.MCU_SPI.D0.$assign              = "MCU_SPI0_D0";
 mcspi1.MCU_SPI.D1.$assign              = "MCU_SPI0_D1";
 mcspi1.mcspiChannel[0].$name           = "CONFIG_MCSPI_CH0";
-mcspi1.mcspiChannel[0].bitRate         = 25000000;
+mcspi1.mcspiChannel[0].bitRate         = 50000000;
 mcspi1.mcspiChannel[0].MCU_CSn.rx      = false;
 mcspi1.mcspiChannel[0].MCU_CSn.$assign = "MCU_SPI0_CS0";
+
+clock.usecPerTick     = 100;
+clock.timerInputClkHz = 50000000;
 
 debug_log.enableLogZoneWarning = false;
 debug_log.enableLogZoneError   = false;
